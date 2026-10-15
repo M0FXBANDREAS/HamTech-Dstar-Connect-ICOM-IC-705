@@ -1,0 +1,98 @@
+# IC-705 Reflector Link — Windows 10/11 x64
+
+Experimental version 0.1.0. A small USB-only desktop app with Connect REF030C,
+Connect REF001C and Disconnect. Source and launchers are included, not a prebuilt EXE.
+Uses the radio's microphone, PTT, AMBE codec and speaker, with Internet via your PC.
+One reflector at a time. Incoming audio is filtered to module C.
+
+## Install and run
+
+1. Extract the whole ZIP to a writable folder on your computer. Do not run inside the ZIP.
+2. Download and install Python 3.13.16 for Windows (64-bit):
+   https://www.python.org/ftp/python/3.13.16/python-3.13.16-amd64.exe
+   Official release page: https://www.python.org/downloads/release/python-31316/
+   Or double-click DOWNLOAD-PYTHON.url in this folder.
+   In the installer, tick Add python.exe to PATH and include the Python launcher.
+   Python 3.10–3.13 x64 is supported.
+3. Install the official Icom USB driver BEFORE connecting the radio:
+   https://www.icomjapan.com/lineup/products/IC-705/?open=1 (Support / USB Driver).
+4. Double-click SETUP.cmd once. It creates .venv locally and downloads PySide6 6.8.3
+   from PyPI. These interface libraries are substantially larger than the source app.
+   Setup needs Internet and downloads the Qt libraries; allow several hundred MB of disk space.
+5. Double-click START.cmd. No administrator rights are needed by the app.
+
+## Radio setup
+
+1. Connect the IC-705 micro-USB port to the PC with a USB DATA cable.
+2. Set MY Call Sign on the radio to your registered amateur callsign.
+3. MENU > 2 > DV GW > Gateway Select > External Gateway (USB (B)).
+4. In DV GW, set Terminal/AP Call Sign to your base call padded to seven
+   positions, then the terminal module. Example: M0ABC  B (two spaces before B).
+   The app defaults to terminal module B; this must match the radio. This B is
+   your local terminal module, independent of the reflector's module C.
+5. Select <<Terminal Mode>>. Set TO/UR to CQCQCQ for voice.
+6. Close RS-MS3W, Doozy or any program using the same data COM port.
+7. Enter the same base callsign in the app, select the data COM port and click a
+   reflector button. The USB data port is separate from the CI-V control port;
+   Icom's driver may label it Serial Port B. With one radio, the higher COM number
+   is suggested, but check Windows Device Manager. You can type COM7, for example.
+8. Wait for USB radio: responding and reflector accepted link. Listen on the
+   IC-705. Use the radio microphone and its PTT to talk; release PTT to listen.
+   To switch reflectors, release PTT and click the other reflector button.
+9. Click Disconnect before changing the radio mode or unplugging USB.
+
+REF001 and REF030 require D-STAR US Trust registration. Register your callsign
+through the applicable D-STAR registration process before transmitting. A successful
+directory request or reflector handshake does not prove that your audio is accepted.
+Verify your first short transmission with another station. The app does not create
+registrations. See https://www.pa7lim.nl/doozy/ for the author's IC-705 setup notes
+and the specific REF001/REF030 registration requirement.
+
+Do not change DATA OFF MOD solely for this app: it forwards the radio's encoded
+terminal voice frames and does not use the Windows USB sound device. If voice is
+missing, verify the radio microphone configuration against Icom's manual.
+
+## Troubleshooting
+
+- No ports: check the driver, cable and Device Manager; click Refresh.
+- Port opens but radio does not answer: check External Gateway USB and Terminal
+  Mode; try the other IC-705 COM port. This is not a CI-V application.
+- Port in use: close other applications using that COM port.
+- D-Plus directory failed: check Internet, registration and firewall; disconnect
+  and retry. No hard-coded reflector IP addresses are used.
+- No reflector reply/refused: check registration and allow outbound TCP 20001
+  to auth.dstargateway.org and UDP 20001 to the selected reflector, with reply
+  traffic. An HTTP-only proxy cannot carry this UDP connection. This app uses
+  an outbound D-Plus dongle connection, rather than Icom's G3 gateway transport.
+- RX from another reflector module is deliberately ignored. Only C is delivered.
+- TX ignored: radio MY must match the app call and TO/UR must be CQCQCQ.
+- Linked but not heard: check US Trust registration and the MY call programmed in
+  the radio; verify with another station. Do not infer voice delivery from a green link.
+- Choppy audio: Internet loss or USB delay can cause gaps. Late/duplicate packets
+  are dropped. There is no full jitter buffer or packet-loss concealment in v0.1.
+- Nothing happens on START: run it in Command Prompt and read errors; rerun SETUP.
+
+Settings are local in HKCU\Software\HamTec\IC705ReflectorLink. Logs are in
+%LOCALAPPDATA%\HamTec\IC705ReflectorLink\app.log (rotated; include callsigns heard).
+The only network operations are D-Plus directory/auth requests, reflector links,
+keepalives and voice frames. No WLAN login, cloud account, or telemetry is used.
+
+## Validation and limits
+
+Eight offline tests pass using PySide6 6.8.3 on Linux: CRC and headers; callsign
+validation; USB parsing/fragmentation/ACK/end frames; D-Plus packet validation;
+a real localhost UDP handshake and voice packets; fake TCP directory responses;
+module-C filtering/half-duplex/stream timeout; and GUI startup.
+
+NOT yet tested on Windows, with a physical IC-705, or against live REF001/REF030.
+No live reflector connection or transmission was made during development.
+Treat this as a first test build; report the log if your radio does not respond.
+A hardware/software combination can still need adjustment despite offline checks.
+
+Developer checks: python -m unittest discover -s tests -v
+Optional: BUILD-EXE.cmd on Windows produces a folder containing an EXE and Qt
+runtime files using PyInstaller. That Windows build recipe has not been run here.
+Keep the entire generated folder together. Include this source ZIP and notices
+when redistributing a build. The supplied START.cmd is the tested source entry point.
+
+GPL-3.0-or-later. Adapted from QDStar / G4KLX; see THIRD_PARTY.md and LICENSE.
